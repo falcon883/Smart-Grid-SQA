@@ -1,0 +1,14 @@
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\pages\AlertsPage.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\pages\DashboardPage.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\pages\LoginPage.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\pages\SettingsPage.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\tests\BaseTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\tests\CrossBrowserTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\tests\DashboardTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\automation\tests\LoginTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\integration\DashboardDataFlowIntegrationTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\integration\SensorToRoutingIntegrationTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\unit\AlertServiceTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\unit\AuditLoggerTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\unit\BatteryManagerTest.java
+D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\src\test\java\unit\DemandPredictorTest.java

@@ -1,0 +1,5 @@
+# Created at 2026-02-27T18:15:22.784
+Boot Manifest-JAR contains absolute paths in classpath 'D:\ClarkU\Spring 26\Software Quality Assurance\Phase 1 & 2\smart-grid-sqa\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
