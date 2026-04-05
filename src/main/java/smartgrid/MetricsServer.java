@@ -34,20 +34,27 @@ public class MetricsServer {
         .help("Edge node CPU usage percent").register();
 
     public static void main(String[] args) throws Exception {
-        DefaultExports.initialize(); // JVM metrics
+    DefaultExports.initialize(); // JVM metrics
 
-        // Simulate some metric values for the dashboard
-        batteryLevel.set(72.5);
-        solarOutput.set(4.3);
-        edgeCpuUsage.set(54.2);
-        routingRequests.inc(150);
-        routingErrors.inc(1);
+    // Simulate some metric values for the dashboard
+    batteryLevel.set(72.5);
+    solarOutput.set(4.3);
+    edgeCpuUsage.set(54.2);
+    routingRequests.inc(150);
+    routingErrors.inc(1);
 
-        HTTPServer server = new HTTPServer(8080);
-        System.out.println("Metrics server running at http://localhost:8080/metrics");
-        System.out.println("Press Ctrl+C to stop.");
-
-        // Keep running
-        Thread.currentThread().join();
+    // Simulate routing latency observations
+    double[] simulatedLatencies = {0.12, 0.08, 0.15, 0.19, 0.11, 0.09, 0.18, 0.13, 0.21, 0.10,
+                                    0.14, 0.16, 0.07, 0.20, 0.12, 0.09, 0.17, 0.13, 0.11, 0.18};
+    for (double latency : simulatedLatencies) {
+        routingDuration.observe(latency);
     }
+
+    HTTPServer server = new HTTPServer(8080);
+    System.out.println("Metrics server running at http://localhost:8080/metrics");
+    System.out.println("Press Ctrl+C to stop.");
+
+    // Keep running
+    Thread.currentThread().join();
+}
 }

@@ -40,11 +40,16 @@
                 "value": 0
               },
               {
+                "color": "dark-green",
+                "value": 400
+              },
+              {
                 "color": "red",
                 "value": 500
               }
             ]
-          }
+          },
+          "unit": "ms"
         },
         "overrides": []
       },
@@ -87,7 +92,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, rate(smartgrid_routing_duration_seconds_bucket[5m])) * 1000",
+          "expr": "histogram_quantile(0.95, smartgrid_routing_duration_seconds_bucket) * 1000",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -580,7 +585,6 @@
     }
   ],
   "preload": false,
-  "refresh": "",
   "schemaVersion": 42,
   "tags": [],
   "templating": {
@@ -593,7 +597,8 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Smart-Grid SQA Dashboard",
+  "weekStart": "",
+  "version": 12,
   "uid": "faqm49l",
-  "version": 10,
-  "weekStart": ""
+  "id": 530156232433664
 }
