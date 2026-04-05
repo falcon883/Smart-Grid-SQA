@@ -13,13 +13,18 @@ This repository contains the complete SQA test suite for the Smart-Grid Neighbor
 a system that uses IoT sensors, AI, and edge computing to balance energy consumption across
 residential neighborhoods using solar panels and battery storage.
 
-The test suite covers **Phase 2** of the SQA project:
+The test suite covers **Phases 2, 3, and 4** of the SQA project:
 - Unit tests (JUnit 5 + Mockito)
 - Integration tests
 - Selenium UI automation (Page Object Model)
 - Cross-browser compatibility tests
+- Prometheus metrics instrumentation (Phase 3)
+- Live Grafana Cloud dashboard (Phase 3)
 - Code review documentation
-- Test results report
+- Test results and evidence
+
+**Live Dashboard:** https://smartgridneighborhood.grafana.net/public-dashboards/868c7b9f4bef45df95eddd6c2705e857  
+**CI Pipeline:** https://github.com/falcon883/Smart-Grid-SQA/actions
 
 ---
 
@@ -37,7 +42,8 @@ smart-grid-sqa/
 │   │   ├── AlertServiceImpl.java        # Alert service implementation
 │   │   ├── AuditLogger.java             # Routing decision audit log
 │   │   ├── SolarSensorAPI.java          # Solar sensor interface (mocked in tests)
-│   │   └── WeatherAPI.java              # Weather API interface (mocked in tests)
+│   │   ├── WeatherAPI.java              # Weather API interface (mocked in tests)
+│   │   └── MetricsServer.java           # Prometheus metrics endpoint (Phase 3)
 │   │
 │   └── test/java/
 │       ├── unit/
@@ -47,7 +53,7 @@ smart-grid-sqa/
 │       │   └── AuditLoggerTest.java     # UT-004 – audit logger unit tests
 │       │
 │       ├── integration/
-│       │   ├── SensorToRoutingIntegrationTest.java   # IT-001 – sensor → routing
+│       │   ├── SensorToRoutingIntegrationTest.java   # IT-001 – sensor to routing
 │       │   └── DashboardDataFlowIntegrationTest.java # IT-002/003/004 – full pipeline
 │       │
 │       └── automation/
@@ -62,13 +68,30 @@ smart-grid-sqa/
 │               ├── DashboardTest.java   # TC-006/007/008: dashboard tests
 │               └── CrossBrowserTest.java# TC-011/012/013: cross-browser tests
 │
+├── test-evidence/                       # Surefire test output files (Phase 3 evidence)
+│   ├── TEST-unit.AlertServiceTest.xml
+│   ├── TEST-unit.AuditLoggerTest.xml
+│   ├── TEST-unit.BatteryManagerTest.xml
+│   ├── TEST-unit.DemandPredictorTest.xml
+│   ├── TEST-integration.DashboardDataFlowIntegrationTest.xml
+│   ├── TEST-integration.SensorToRoutingIntegrationTest.xml
+│   └── *.txt                            # Human-readable pass/fail summaries
+│
 ├── test-results/
 │   └── TestResultsReport.md            # Pass/Fail report for all test suites
 │
 ├── docs/
-│   └── CodeReviewNotes.md              # Formal code review findings and resolutions
+│   ├── CodeReviewNotes.md              # Formal code review findings and resolutions
+│   └── grafana-dashboard.json          # Grafana dashboard export (Phase 3)
 │
-├── pom.xml                             # Maven build with JUnit 5, Mockito, Selenium
+├── webapp/                             # Energy Monitor dashboard (Selenium target)
+│   ├── dashboard.html
+│   ├── login.html
+│   ├── alerts.html
+│   ├── settings.html
+│   └── serve.py                        # Local dev server (python serve.py)
+│
+├── pom.xml                             # Maven build with JUnit 5, Mockito, Selenium, Prometheus
 └── README.md                           # This file
 ```
 
@@ -76,13 +99,14 @@ smart-grid-sqa/
 
 ## Prerequisites
 
-| Tool          | Version  | Purpose                          |
-|---------------|----------|----------------------------------|
-| Java JDK      | 17+      | Compile and run tests            |
-| Maven         | 3.8+     | Build and dependency management  |
-| Chrome        | Latest   | Selenium Chrome tests            |
-| Firefox       | Latest   | Selenium Firefox tests           |
-| Safari        | 17+      | Selenium Safari tests (macOS only)|
+| Tool          | Version  | Purpose                              |
+|---------------|----------|--------------------------------------|
+| Java JDK      | 17+      | Compile and run tests                |
+| Maven         | 3.8+     | Build and dependency management      |
+| Chrome        | Latest   | Selenium Chrome tests                |
+| Firefox       | Latest   | Selenium Firefox tests               |
+| Safari        | 17+      | Selenium Safari tests (macOS only)   |
+| Grafana Alloy | Latest   | Forward metrics to Grafana Cloud     |
 
 ---
 
@@ -98,8 +122,13 @@ mvn test -P unit-tests
 mvn test
 ```
 
-### Run Selenium Tests (requires running dashboard at localhost:3000)
+### Run Selenium Tests (requires dashboard running at localhost:3000)
 ```bash
+# Start the webapp first
+cd webapp
+python serve.py
+
+# Then in a separate terminal
 mvn test -P selenium-tests
 ```
 
@@ -112,11 +141,65 @@ mvn test -Dtest=CrossBrowserTest
 
 ---
 
+## Phase 3: Running the Prometheus Metrics Server
+
+The `MetricsServer` class starts an HTTP server on port 8080 exposing
+real-time metrics for Grafana Alloy to scrape.
+
+### Start the metrics server
+```bash
+mvn compile exec:java -Dexec.mainClass="smartgrid.MetricsServer"
+```
+
+### Verify metrics are exposed
+Open http://localhost:8080/metrics in your browser. You should see:
+```
+smartgrid_battery_level_percent 72.5
+smartgrid_routing_requests_total 150.0
+smartgrid_edge_cpu_percent 54.2
+smartgrid_solar_output_kwh 4.3
+```
+
+### Metrics exposed
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `smartgrid_routing_requests_total` | Counter | Total routing decisions made |
+| `smartgrid_routing_errors_total` | Counter | Total routing errors |
+| `smartgrid_routing_duration_seconds` | Histogram | Routing decision latency |
+| `smartgrid_battery_level_percent` | Gauge | Battery charge level (0-100%) |
+| `smartgrid_solar_output_kwh` | Gauge | Solar panel output in kWh |
+| `smartgrid_edge_cpu_percent` | Gauge | Edge node CPU usage |
+
+JVM metrics (heap, threads, GC) are also exposed automatically via `simpleclient_hotspot`.
+
+---
+
+## Phase 3: Grafana Cloud Dashboard
+
+Metrics are forwarded to Grafana Cloud using Grafana Alloy. The dashboard
+JSON export is in `docs/grafana-dashboard.json`.
+
+**Live dashboard:** https://smartgridneighborhood.grafana.net/public-dashboards/868c7b9f4bef45df95eddd6c2705e857
+
+### Alloy config snippet
+Add this block to your Alloy config to scrape the metrics server:
+```hcl
+prometheus.scrape "smart_grid" {
+  targets         = [{"__address__" = "localhost:8080"}]
+  forward_to      = [prometheus.remote_write.metrics_service.receiver]
+  scrape_interval = "5s"
+  scrape_timeout  = "4s"
+}
+```
+
+---
+
 ## Key Design Decisions
 
 ### Why Mockito?
 `SolarSensorAPI` and `WeatherAPI` are interfaces representing physical IoT hardware and
-external cloud services. Mocking them in unit tests allows us to:
+external cloud services. Mocking them in unit tests allows the team to:
 - Test in isolation without hardware
 - Simulate edge cases (sensor failure, extreme weather) repeatably
 - Run tests in CI without network access
@@ -130,34 +213,43 @@ POM separates page structure (locators, interactions) from test logic. Benefits:
 ### Why Explicit Waits?
 The Energy Monitor Dashboard loads data asynchronously from IoT sensor APIs.
 `Thread.sleep()` is non-deterministic and wastes time. Explicit waits with
-`WebDriverWait` + `ExpectedConditions` wait exactly as long as needed.
+`WebDriverWait` and `ExpectedConditions` wait exactly as long as needed.
+
+### Why Prometheus + Grafana?
+Phase 3 requires live monitoring of RED metrics (Requests, Errors, Duration)
+and saturation metrics (CPU, memory, battery). The Prometheus Java client
+exposes these on a `/metrics` endpoint. Grafana Alloy scrapes and forwards
+them to Grafana Cloud where they are visualised in real time.
 
 ---
 
 ## Test Coverage by Requirement
 
-| Requirement | Description                         | Test Coverage       |
-|-------------|-------------------------------------|---------------------|
-| FR-001      | Sensor data ≤ 5 second interval     | TC-001, TC-002      |
-| FR-002      | AI prediction MAE < 10%             | TC-003, UT-002      |
-| FR-003      | Routing decision within 500ms       | TC-005, IT-001      |
-| FR-004      | Dashboard 3 real-time metrics       | TC-006, DashboardTest |
-| FR-005      | Low battery alert < 20%             | TC-008, UT-003      |
-| FR-007      | Chrome + Firefox + Safari           | CrossBrowserTest    |
-| FR-008      | Audit log with timestamps           | UT-004, IT tests    |
-| NFR-004     | Cyclomatic Complexity ≤ 15          | Code Review CR2-01  |
-| NFR-005     | Responsive 320px–1920px             | CrossBrowserTest    |
+| Requirement | Description                         | Test Coverage              |
+|-------------|-------------------------------------|----------------------------|
+| FR-001      | Sensor data at 5 second interval    | TC-001, TC-002             |
+| FR-002      | AI prediction MAE < 10%             | TC-003, UT-002             |
+| FR-003      | Routing decision within 500ms       | TC-005, IT-001             |
+| FR-004      | Dashboard 3 real-time metrics       | TC-006, DashboardTest      |
+| FR-005      | Low battery alert below 20%         | TC-008, UT-003             |
+| FR-007      | Chrome, Firefox, Safari             | CrossBrowserTest           |
+| FR-008      | Audit log with timestamps           | UT-004, IT tests           |
+| NFR-001     | 99.5% uptime                        | TC-015, TC-016             |
+| NFR-002     | 500 concurrent edge nodes           | TC-017                     |
+| NFR-003     | TLS 1.3 encryption                  | TC-018                     |
+| NFR-004     | Cyclomatic Complexity at most 15    | Code Review CR2-01         |
+| NFR-005     | Responsive 320px to 1920px          | CrossBrowserTest           |
 
 ---
 
 ## Team Contributions
 
-| Team Member                        | Contributions                                              |
-|------------------------------------|------------------------------------------------------------|
-| Durvank Deorukhkar                 | Integration tests, DashboardDataFlowIntegrationTest, RTM   |
-| Percival Tapera                    | DemandPredictorTest, AlertsPage, SettingsPage, CrossBrowserTest |
-| Harsha Vardhan Varma Kopanathi     | BatteryManagerTest, AuditLoggerTest, LoginPage, DashboardPage, LoginTest, DashboardTest |
+| Team Member                        | Contributions                                                        |
+|------------------------------------|----------------------------------------------------------------------|
+| Durvank Deorukhkar                 | Integration tests, DashboardDataFlowIntegrationTest, RTM, RED Metrics, Cost of Quality |
+| Percival Tapera                    | DemandPredictorTest, AlertsPage, SettingsPage, CrossBrowserTest, Go/No-Go checklist |
+| Harsha Vardhan Varma Kopanathi     | BatteryManagerTest, AuditLoggerTest, LoginPage, DashboardPage, MetricsServer, Grafana dashboard |
 
 ---
 
-*Last updated: February 26, 2026*
+*Last updated: April 2026*
