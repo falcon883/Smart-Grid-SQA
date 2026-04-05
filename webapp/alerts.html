@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Grid – Alerts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0f1a; --surface: #111827; --border: #1e2d40;
+      --accent: #00e5a0; --accent-dim: rgba(0,229,160,0.1);
+      --red: #f87171; --red-dim: rgba(248,113,113,0.1);
+      --yellow: #fbbf24; --yellow-dim: rgba(251,191,36,0.1);
+      --blue: #38bdf8; --blue-dim: rgba(56,189,248,0.1);
+      --text: #e2e8f0; --muted: #64748b;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px;
+      font-family: 'Space Mono', monospace; font-size: 12px;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+    .nav-logo span { font-size: 20px; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 14px;
+      padding: 7px 14px; border-radius: 8px; transition: color 0.2s, background 0.2s; }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-links a.active { color: var(--accent); background: var(--accent-dim); }
+    #logout-btn { background: none; border: 1px solid var(--border);
+      color: var(--muted); padding: 7px 16px; border-radius: 8px; font-size: 13px;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: color 0.2s, border-color 0.2s; margin-left: 8px; }
+    #logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+    main { padding: 32px; max-width: 800px; margin: 0 auto; }
+
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    h1.alerts-title { font-size: 24px; font-weight: 600; }
+    #dismiss-all-alerts {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 8px 18px; border-radius: 8px; font-size: 13px;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s;
+    }
+    #dismiss-all-alerts:hover { border-color: var(--red); color: var(--red); }
+
+    .no-alerts-message {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+      font-family: 'Space Mono', monospace; font-size: 13px;
+      border: 1px dashed var(--border); border-radius: 14px;
+    }
+    .no-alerts-message .icon { font-size: 32px; margin-bottom: 12px; }
+
+    .alert-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px; margin-bottom: 12px;
+      display: flex; align-items: flex-start; gap: 16px;
+      transition: border-color 0.2s;
+    }
+    .alert-item:hover { border-color: #2d3f55; }
+
+    .alert-item.low-battery { border-left: 3px solid var(--red); }
+    .alert-item.sensor-failure { border-left: 3px solid var(--yellow); }
+    .alert-item.system { border-left: 3px solid var(--blue); }
+
+    .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .alert-body { flex: 1; }
+    .alert-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .alert-desc { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+    .timestamp {
+      font-size: 11px; color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+    .alert-badge {
+      font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0;
+      font-family: 'Space Mono', monospace;
+    }
+    .badge-red { background: var(--red-dim); color: var(--red); }
+    .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+    .badge-blue { background: var(--blue-dim); color: var(--blue); }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><span>⚡</span> SmartGrid / Optimizer</div>
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/alerts" class="active">Alerts</a>
+      <a href="/settings">Settings</a>
+    </div>
+    <button id="logout-btn">Sign Out</button>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1 class="alerts-title">System Alerts</h1>
+      <button id="dismiss-all-alerts">Dismiss All</button>
+    </div>
+
+    <!-- Active alerts list -->
+    <div id="alerts-container">
+      <div class="alert-item low-battery">
+        <div class="alert-icon">🔴</div>
+        <div class="alert-body">
+          <div class="alert-title">Low Battery Warning</div>
+          <div class="alert-desc">Edge node battery charge has fallen below 19% — below the 20% threshold configured in settings. Recommend activating grid fallback.</div>
+          <div class="timestamp">2026-03-30T08:42:15Z</div>
+        </div>
+        <span class="alert-badge badge-red">Critical</span>
+      </div>
+
+      <div class="alert-item sensor-failure">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <div class="alert-title">Solar Sensor Intermittent</div>
+          <div class="alert-desc">Node SN-07 reported 3 dropped readings in the last 60 seconds. Data interpolated. Inspect sensor wiring.</div>
+          <div class="timestamp">2026-03-30T07:15:02Z</div>
+        </div>
+        <span class="alert-badge badge-yellow">Major</span>
+      </div>
+
+      <div class="alert-item system">
+        <div class="alert-icon">ℹ️</div>
+        <div class="alert-body">
+          <div class="alert-title">OTA Firmware Update Available</div>
+          <div class="alert-desc">Version 2.4.1 is available for edge nodes. Schedule update during low-demand window (2:00–4:00 AM).</div>
+          <div class="timestamp">2026-03-29T22:00:00Z</div>
+        </div>
+        <span class="alert-badge badge-blue">Info</span>
+      </div>
+    </div>
+
+    <!-- Empty state — shown when all dismissed -->
+    <div class="no-alerts-message" id="no-alerts-state" style="display:none">
+      <div class="icon">✅</div>
+      No active alerts — all systems nominal
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('dismiss-all-alerts').addEventListener('click', () => {
+      document.getElementById('alerts-container').innerHTML = '';
+      document.getElementById('no-alerts-state').style.display = 'block';
+    });
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>

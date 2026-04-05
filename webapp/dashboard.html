@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Grid – Energy Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0f1a;
+      --surface: #111827;
+      --surface2: #161f2e;
+      --border: #1e2d40;
+      --accent: #00e5a0;
+      --accent-dim: rgba(0,229,160,0.1);
+      --blue: #38bdf8;
+      --blue-dim: rgba(56,189,248,0.1);
+      --yellow: #fbbf24;
+      --yellow-dim: rgba(251,191,36,0.1);
+      --red: #f87171;
+      --red-dim: rgba(248,113,113,0.1);
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .nav-logo span { font-size: 20px; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-links a {
+      text-decoration: none; color: var(--muted);
+      font-size: 14px; padding: 7px 14px; border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-links a.active { color: var(--accent); background: var(--accent-dim); }
+    #logout-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); padding: 7px 16px; border-radius: 8px;
+      font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      margin-left: 8px;
+    }
+    #logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+    /* ── ERROR BANNER ── */
+    .error-banner {
+      display: none;
+      background: var(--red-dim);
+      border-bottom: 1px solid var(--red);
+      color: var(--red);
+      padding: 12px 32px;
+      font-size: 13px;
+      font-family: 'Space Mono', monospace;
+    }
+    .error-banner.visible { display: block; }
+
+    /* ── MAIN ── */
+    main { padding: 32px; max-width: 1280px; margin: 0 auto; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    h1.dashboard-title {
+      font-size: 24px; font-weight: 600;
+    }
+    .header-meta {
+      display: flex; align-items: center; gap: 16px;
+      font-size: 13px; color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+    #connection-status {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--accent); font-size: 12px;
+    }
+    #connection-status::before {
+      content: '';
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+
+    /* ── WIDGETS GRID ── */
+    .widgets {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .widget {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .widget:hover { border-color: #2d3f55; }
+    .widget-accent-bar {
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .widget-label {
+      font-size: 11px; font-weight: 500; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      font-family: 'Space Mono', monospace;
+      margin-bottom: 16px;
+    }
+    .widget-value {
+      font-size: 36px; font-weight: 600;
+      font-family: 'Space Mono', monospace;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .widget-sub {
+      font-size: 12px; color: var(--muted);
+    }
+
+    /* ── BOTTOM ROW ── */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+
+    /* Alerts panel */
+    #alerts-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .panel-title {
+      font-size: 13px; font-weight: 500;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.08em; font-family: 'Space Mono', monospace;
+      margin-bottom: 16px;
+    }
+    .alert {
+      border-radius: 8px; padding: 12px 16px;
+      font-size: 13px; margin-bottom: 8px;
+    }
+    .alert.low-battery {
+      background: var(--red-dim);
+      border: 1px solid rgba(248,113,113,0.25);
+      color: var(--red);
+      display: none;
+    }
+    .alert.low-battery.visible { display: block; }
+    .no-alert-msg {
+      font-size: 13px; color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* History chart placeholder */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .chart-placeholder {
+      height: 120px; margin-top: 12px;
+      background: linear-gradient(135deg, var(--surface2) 0%, var(--bg) 100%);
+      border-radius: 8px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 12px; font-family: 'Space Mono', monospace;
+    }
+
+    /* Simulate sensor data update button (for test triggering) */
+    .sim-controls {
+      position: fixed; bottom: 24px; right: 24px; z-index: 200;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .sim-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); padding: 8px 14px; border-radius: 8px;
+      font-size: 11px; font-family: 'Space Mono', monospace; cursor: pointer;
+      transition: all 0.2s; text-align: left;
+    }
+    .sim-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .sim-label {
+      font-size: 10px; color: var(--muted); text-align: right;
+      font-family: 'Space Mono', monospace; margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Error banner — hidden by default, shown when sensor connection lost -->
+  <div class="error-banner" id="error-banner-el">
+    ⚠ Sensor connection lost — data feed unavailable. Attempting reconnect…
+  </div>
+
+  <nav>
+    <div class="nav-logo"><span>⚡</span> SmartGrid / Optimizer</div>
+    <div class="nav-links">
+      <a href="/dashboard" class="active">Dashboard</a>
+      <a href="/alerts" id="alerts-nav-link">Alerts</a>
+      <a href="/settings" id="settings-nav-link">Settings</a>
+    </div>
+    <button id="logout-btn">Sign Out</button>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1 class="dashboard-title">Energy Monitor</h1>
+      <div class="header-meta">
+        <div id="connection-status">Connected</div>
+        <div id="last-updated">Updated: <span id="last-updated-time">--</span></div>
+      </div>
+    </div>
+
+    <!-- Real-time data widgets -->
+    <div class="widgets">
+      <div class="widget">
+        <div class="widget-accent-bar" style="background:var(--accent)"></div>
+        <div class="widget-label">Solar Output</div>
+        <div class="widget-value" id="solar-output-value" style="color:var(--accent)">8.5 kWh</div>
+        <div class="widget-sub">Generation capacity: 12 kWh max</div>
+      </div>
+      <div class="widget">
+        <div class="widget-accent-bar" style="background:var(--blue)"></div>
+        <div class="widget-label">Battery Level</div>
+        <div class="widget-value" id="battery-level-value" style="color:var(--blue)">75%</div>
+        <div class="widget-sub">Charging from solar</div>
+      </div>
+      <div class="widget">
+        <div class="widget-accent-bar" style="background:var(--yellow)"></div>
+        <div class="widget-label">Grid Usage</div>
+        <div class="widget-value" id="grid-usage-value" style="color:var(--yellow)">2.3 kWh</div>
+        <div class="widget-sub">Reduced by 18% today</div>
+      </div>
+      <div class="widget">
+        <div class="widget-accent-bar" style="background:#a78bfa"></div>
+        <div class="widget-label">Demand Forecast</div>
+        <div class="widget-value" id="demand-forecast-value" style="color:#a78bfa">12.0 kWh</div>
+        <div class="widget-sub">Next 24-hour prediction</div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="chart-card">
+        <div class="panel-title">24-Hour Generation History</div>
+        <div class="chart-placeholder">[ Prometheus / Grafana handles live chart rendering ]</div>
+      </div>
+
+      <!-- Alerts panel -->
+      <div id="alerts-panel">
+        <div class="panel-title">Active Alerts</div>
+        <div class="alert low-battery" id="low-battery-alert-el">
+          🔴 Low battery: charge below 20% threshold
+        </div>
+        <div class="no-alert-msg" id="no-alert-msg">No active alerts</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Simulation controls for Selenium test scenarios -->
+  <div class="sim-controls">
+    <div class="sim-label">Test Simulation</div>
+    <button class="sim-btn" onclick="simulateLowBattery()">⚡ Trigger Low Battery</button>
+    <button class="sim-btn" onclick="simulateConnectionLoss()">📡 Lose Connection</button>
+    <button class="sim-btn" onclick="restoreNormal()">✓ Restore Normal</button>
+  </div>
+
+  <script>
+    // Handle ?simulate= query params used by Selenium tests (TC-007, TC-008)
+    const params = new URLSearchParams(window.location.search);
+    const sim = params.get('simulate');
+    if (sim === 'sensor_offline') {
+      // TC-007: show error banner immediately on page load
+      const banner = document.querySelector('.error-banner');
+      banner.classList.add('visible');
+      banner.style.display = 'block';
+      document.getElementById('connection-status').textContent = 'Disconnected';
+      document.getElementById('connection-status').style.color = 'var(--red)';
+    } else if (sim === 'low_battery') {
+      // TC-008: show low battery alert immediately on page load
+      document.getElementById('battery-level-value').textContent = '19%';
+      document.getElementById('battery-level-value').style.color = 'var(--red)';
+      document.getElementById('low-battery-alert-el').classList.add('visible');
+      document.getElementById('low-battery-alert-el').style.display = 'block';
+      document.getElementById('no-alert-msg').style.display = 'none';
+    }
+
+    // Update last-updated timestamp
+    function tick() {
+      document.getElementById('last-updated-time').textContent =
+        new Date().toLocaleTimeString();
+    }
+    tick();
+    setInterval(tick, 5000);
+
+    // Simulate live data updates (so textToBePresentInElement waits can work)
+    const solarValues = ['8.5 kWh', '8.7 kWh', '9.1 kWh', '8.9 kWh', '8.5 kWh'];
+    let solarIdx = 0;
+    setInterval(() => {
+      solarIdx = (solarIdx + 1) % solarValues.length;
+      document.getElementById('solar-output-value').textContent = solarValues[solarIdx];
+      tick();
+    }, 3000);
+
+    // Test scenario helpers
+    function simulateLowBattery() {
+      document.getElementById('battery-level-value').textContent = '19%';
+      document.getElementById('battery-level-value').style.color = 'var(--red)';
+      document.getElementById('low-battery-alert-el').classList.add('visible');
+      document.getElementById('low-battery-alert-el').style.display = 'block';
+      document.getElementById('no-alert-msg').style.display = 'none';
+    }
+
+    function simulateConnectionLoss() {
+      const banner = document.querySelector('.error-banner');
+      banner.classList.add('visible');
+      banner.style.display = 'block';
+      document.getElementById('connection-status').textContent = 'Disconnected';
+      document.getElementById('connection-status').style.color = 'var(--red)';
+    }
+
+    function restoreNormal() {
+      document.getElementById('battery-level-value').textContent = '75%';
+      document.getElementById('battery-level-value').style.color = 'var(--blue)';
+      document.getElementById('low-battery-alert-el').classList.remove('visible');
+      document.getElementById('low-battery-alert-el').style.display = 'none';
+      document.getElementById('no-alert-msg').style.display = 'block';
+      document.querySelector('.error-banner').classList.remove('visible');
+      document.querySelector('.error-banner').style.display = 'none';
+      document.getElementById('connection-status').textContent = 'Connected';
+      document.getElementById('connection-status').style.color = 'var(--accent)';
+    }
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>

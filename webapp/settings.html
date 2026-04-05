@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Grid – Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0f1a; --surface: #111827; --surface2: #161f2e;
+      --border: #1e2d40; --accent: #00e5a0; --accent-dim: rgba(0,229,160,0.1);
+      --red: #f87171; --yellow: #fbbf24; --blue: #38bdf8;
+      --text: #e2e8f0; --muted: #64748b;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 32px; background: var(--surface); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px;
+      font-family: 'Space Mono', monospace; font-size: 12px; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.08em; }
+    .nav-logo span { font-size: 20px; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 14px;
+      padding: 7px 14px; border-radius: 8px; transition: color 0.2s, background 0.2s; }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-links a.active { color: var(--accent); background: var(--accent-dim); }
+    #logout-btn { background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 7px 16px; border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: color 0.2s, border-color 0.2s; margin-left: 8px; }
+    #logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+    main { padding: 32px; max-width: 700px; margin: 0 auto; }
+    h1.settings-title { font-size: 24px; font-weight: 600; margin-bottom: 28px; }
+
+    .section {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px; margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.08em; font-family: 'Space Mono', monospace; margin-bottom: 20px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+
+    .field { margin-bottom: 20px; }
+    label { display: block; font-size: 13px; font-weight: 500; color: var(--text);
+      margin-bottom: 6px; }
+    .field-hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="number"], input[type="text"] {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 11px 14px; font-size: 15px; color: var(--text);
+      font-family: 'Space Mono', monospace; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.1); }
+
+    #save-settings-btn {
+      background: var(--accent); color: #0a0f1a; border: none; border-radius: 8px;
+      padding: 11px 24px; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    #save-settings-btn:hover { opacity: 0.88; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 999;
+      padding: 14px 22px; border-radius: 10px; font-size: 14px; font-weight: 500;
+      display: none; animation: slideUp 0.3s ease;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .toast.success { background: #052e1c; border: 1px solid var(--accent); color: var(--accent); display: none; }
+    .toast.visible { display: flex !important; align-items: center; gap: 8px; }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* OTA section */
+    .ota-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap;
+    }
+    .ota-info { flex: 1; }
+    .firmware-row {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+    }
+    .fw-label { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+    #firmware-version {
+      font-size: 14px; font-family: 'Space Mono', monospace; color: var(--accent); font-weight: 700;
+    }
+    #ota-status {
+      font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace;
+      margin-top: 4px; min-height: 18px;
+    }
+    #initiate-ota-btn {
+      background: none; border: 1px solid var(--border); color: var(--text);
+      padding: 10px 20px; border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    #initiate-ota-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    .progress-bar {
+      height: 4px; background: var(--border); border-radius: 2px; margin-top: 10px;
+      overflow: hidden; display: none;
+    }
+    .progress-bar.active { display: block; }
+    .progress-fill {
+      height: 100%; width: 0; background: var(--accent);
+      border-radius: 2px; transition: width 0.1s linear;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><span>⚡</span> SmartGrid / Optimizer</div>
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/alerts">Alerts</a>
+      <a href="/settings" class="active">Settings</a>
+    </div>
+    <button id="logout-btn">Sign Out</button>
+  </nav>
+
+  <main>
+    <h1 class="settings-title">Settings</h1>
+
+    <!-- Alert Threshold Settings -->
+    <div class="section">
+      <div class="section-title">Alert Thresholds</div>
+      <div class="field">
+        <label for="low-battery-threshold">Low Battery Alert Threshold (%)</label>
+        <div class="field-hint">Alert fires when battery charge falls below this value (FR-005)</div>
+        <input type="number" id="low-battery-threshold" value="20" min="5" max="50"/>
+      </div>
+      <button id="save-settings-btn">Save Settings</button>
+    </div>
+
+    <!-- Firmware / OTA -->
+    <div class="section">
+      <div class="section-title">Firmware Management (OTA)</div>
+      <div class="ota-row">
+        <div class="ota-info">
+          <div class="firmware-row">
+            <span class="fw-label">Current version:</span>
+            <span id="firmware-version">v2.3.7</span>
+          </div>
+          <div id="ota-status">Ready — tap Initiate to start OTA update</div>
+          <div class="progress-bar" id="ota-progress-bar">
+            <div class="progress-fill" id="ota-progress-fill"></div>
+          </div>
+        </div>
+        <button id="initiate-ota-btn">Initiate OTA Update</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Success Toast -->
+  <div class="toast success" id="success-toast">✓ Settings saved successfully</div>
+
+  <script>
+    // Save settings
+    document.getElementById('save-settings-btn').addEventListener('click', () => {
+      const toast = document.getElementById('success-toast');
+      toast.classList.add('visible');
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.classList.remove('visible');
+        toast.style.display = 'none';
+      }, 3000);
+    });
+
+    // OTA update simulation
+    document.getElementById('initiate-ota-btn').addEventListener('click', () => {
+      const status = document.getElementById('ota-status');
+      const progress = document.getElementById('ota-progress-bar');
+      const fill = document.getElementById('ota-progress-fill');
+      const btn = document.getElementById('initiate-ota-btn');
+
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      progress.classList.add('active');
+      status.textContent = 'Downloading firmware v2.4.1…';
+      status.style.color = 'var(--yellow)';
+
+      let pct = 0;
+      const interval = setInterval(() => {
+        pct += 4;
+        fill.style.width = pct + '%';
+        if (pct >= 50) status.textContent = 'Flashing firmware… do not power off';
+        if (pct >= 100) {
+          clearInterval(interval);
+          status.textContent = 'Update complete — v2.4.1 installed';
+          status.style.color = 'var(--accent)';
+          document.getElementById('firmware-version').textContent = 'v2.4.1';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
+      }, 60); // ~25 seconds total (60ms × ~416 steps at 4% each → just under 2min spec)
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>

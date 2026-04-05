@@ -94,7 +94,23 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
         </dependency>
-
+		
+		<!-- ============= Prometheus Java Client ============= -->
+		<dependency>
+			<groupId>io.prometheus</groupId>
+			<artifactId>simpleclient</artifactId>
+			<version>0.16.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.prometheus</groupId>
+			<artifactId>simpleclient_httpserver</artifactId>
+			<version>0.16.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.prometheus</groupId>
+			<artifactId>simpleclient_hotspot</artifactId>
+			<version>0.16.0</version>
+		</dependency>
     </dependencies>
 
     <build>
@@ -108,14 +124,13 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <!-- Exclude Selenium tests from default run (need browser) -->
+                    <!-- Exclude Selenium tests from default run (need browser + server) -->
                     <excludes>
                         <exclude>**/automation/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
 
-            <!-- Separate profile for running Selenium tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -137,7 +152,8 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
+                        <!-- combine.self=override replaces the base <configuration> entirely -->
+                        <configuration combine.self="override">
                             <includes>
                                 <include>**/unit/**/*Test.java</include>
                                 <include>**/integration/**/*Test.java</include>
@@ -149,6 +165,7 @@
         </profile>
 
         <!-- Run Selenium automation tests -->
+        <!-- REQUIRES: python webapp/serve.py running on localhost:3000 first -->
         <profile>
             <id>selenium-tests</id>
             <build>
@@ -156,7 +173,13 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
+                        <!--
+                            combine.self="override" is CRITICAL here.
+                            Without it, Maven MERGES the base <excludes>**/automation/**</excludes>
+                            with this profile's config, so automation tests are still excluded
+                            and 0 tests run even though the profile is active.
+                        -->
+                        <configuration combine.self="override">
                             <includes>
                                 <include>**/automation/**/*Test.java</include>
                             </includes>
