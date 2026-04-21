@@ -13,7 +13,7 @@ import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 3000
-WEBAPP_DIR = os.path.join(os.path.dirname(__file__), 'webapp')
+WEBAPP_DIR = WEBAPP_DIR = os.path.dirname(__file__)
 
 ROUTES = {
     '/':           'dashboard.html',
