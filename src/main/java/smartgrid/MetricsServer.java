@@ -19,7 +19,7 @@ public class MetricsServer {
     public static final Histogram routingDuration = Histogram.build()
         .name("smartgrid_routing_duration_seconds")
         .help("Routing decision latency")
-        .buckets(0.05, 0.1, 0.2, 0.5, 1.0).register();
+        .buckets(0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 1.0).register();
 
     // Saturation Metrics
     public static final Gauge batteryLevel = Gauge.build()
